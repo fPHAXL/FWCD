@@ -5,7 +5,7 @@ Retrieved 2026-06-29, License - CC BY-SA 4.0
 -->
 
 <details>
-  <summary>The title of the image group</summary>
+  <summary>Dashboard as of Jun 2026</summary>
   <img src="/Current_State/Screenshot 202606 (1).png" alt="image-description"/>
    <img src="/Current_State/Screenshot 202606 (2).png" alt="image-description"/>
    <img src="/Current_State/Screenshot 202606 (3).png" alt="image-description"/>
