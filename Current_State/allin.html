@@ -1,0 +1,1444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FIFA World Cup - Vibrant History</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        /* --- GLOBAL: Hide Page Scrollbars --- */
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar, 
+body::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    background: transparent;
+}
+
+/* --- TIMELINE: Ensure it's ALWAYS on top (z-index 2000+) --- */
+#timeline-wrapper {
+    position: fixed; /* Changed from relative/absolute to fixed */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 98px;
+    background: rgba(15, 15, 15, 0.95);
+    
+    border-bottom: 1px solid #111;
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    z-index: 2000 !important; /* CRITICAL: Higher than Leaflet's max */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    box-shadow: 0 0.5px 1px #111;
+}
+
+#timeline-wrapper::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    background: transparent;
+}
+
+/* --- MAP: Ensure it stays BELOW the timeline --- */
+#map {
+    position: absolute;
+    top: 98px; /* Push map below timeline */
+    left: 0;
+    width: 100%;
+    height: calc(100vh - 98px);
+    z-index: 1 !important; /* Keep map low */
+     background: #111; /* Match timeline background color to hide gaps */
+}
+
+/* --- LEAFLET INTERNAL: Lower all Leaflet panes/controls --- */
+.leaflet-container {
+     background: #111; /* Match timeline background color to hide gaps */
+    z-index: 1 !important;
+}
+
+.leaflet-pane {
+    z-index: 1 !important;
+}
+
+.leaflet-top,
+.leaflet-bottom {
+    z-index: 2 !important; /* Controls slightly higher than map, but still below timeline */
+}
+
+.leaflet-popup-pane {
+    z-index: 3 !important; /* Popups can be higher, but still below timeline */
+}
+
+/* --- CENTER MARKER: Ensure it's on top of timeline --- */
+#timeline-center-marker {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    height: 3%;
+    background: #ff3b30;
+    opacity: 0.75;
+    backdrop-filter: blur(12px);
+    z-index: 3000 !important; /* Higher than timeline wrapper */
+    pointer-events: all;
+    cursor: pointer;
+    box-shadow: 0 0 20px rgba(255, 59, 48, 0.6);
+}
+
+ 
+        body { margin: 0; background: #111; }
+        #map { width: 100vw; height: 100vh; background: #111; }
+        circle { cursor: pointer; transition: fill-opacity 0.2s; }
+        circle:hover { fill-opacity: 1 !important; stroke: #fff; stroke-width: 2px; }
+        .leaflet-popup-content-wrapper { background: #2d2d2d; color: #e0e0e0; border-radius: 4px; }
+        .leaflet-popup-tip { background: #2d2d2d; }
+        .leaflet-popup-content strong { color: #fff; }
+        .leaflet-popup-content small { color: #aaa; }
+        /* --- Year Filter Styles with Fisheye --- */
+#year-filter-container {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    background: rgba(20, 20, 20, 0.85);
+    backdrop-filter: blur(12px);
+    padding: 20px 40px; /* More padding for fisheye expansion */
+    border-radius: 50px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px; /* Tighter gap, scaling handles separation */
+    cursor: pointer;
+    transition: all 0.3s ease;
+    user-select: none;
+    overflow: hidden; /* Prevents large text from breaking layout */
+    min-width: 300px;
+}
+
+#year-filter-container:hover {
+    background: rgba(30, 30, 30, 0.95);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.year-option {
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-weight: 800;
+    color: #555;
+    transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1); /* Fast smooth transition */
+    text-align: center;
+    white-space: nowrap;
+    will-change: transform, color, opacity; /* Performance optimization */
+    cursor: pointer;
+}
+
+/* The Accent Glow is applied dynamically via JS style.textShadow */
+.year-option.accented {
+    color: #fff !important;
+    z-index: 10;
+}
+
+#reset-hint {
+    position: absolute;
+    bottom: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #888;
+    font-size: 0.75rem;
+    opacity: 0;
+    transition: opacity 0.3s;
+    white-space: nowrap;
+    pointer-events: none;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+#year-filter-container:hover #reset-hint {
+    opacity: 1;
+}      
+
+/* --- Glossy Hover Tooltip --- */
+#map-tooltip {
+    position: absolute;
+    background: rgba(20, 20, 20, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 10px 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    pointer-events: none; /* Crucial: lets mouse pass through to map */
+    opacity: 0;
+    transform: translate(-50%, -150%); /* Centers above cursor + slight offset */
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 2000;
+    color: #fff;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    text-align: left;
+    min-width: 120px;
+}
+
+#map-tooltip.visible {
+    opacity: 1;
+    transform: translate(-50%, -140%); /* Slight lift on appear */
+}
+
+#map-tooltip .tt-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+    padding-bottom: 4px;
+}
+
+#map-tooltip .tt-row {
+    font-size: 0.75rem;
+    color: #ddd;
+    margin: 2px 0;
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+}
+
+#map-tooltip .tt-label {
+    color: #888;
+    font-weight: 500;
+}
+
+#map-tooltip .tt-value {
+    color: #fff;
+    font-weight: 600;
+    text-align: right;
+}  
+
+/* --- Modern Horizontal Timeline --- *//* --- Modern Horizontal Timeline (Slim & No Scrollbar) --- */
+
+
+/* Hide Scrollbar for Chrome/Safari/Opera */
+#timeline-wrapper::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    background: transparent;
+}
+
+
+
+
+
+/* Timeline Track */
+#timeline-track {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 50vw;
+    gap: 12px; /* Slightly tighter gap */
+    height: 100%;
+     opacity: 0.75;
+         backdrop-filter: blur(12px);
+}
+
+/* Match Card */
+.match-card {
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 200px; /* Slightly narrower */
+    height: 80px; /* Scaled down from 110px */
+    background: #222;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 6px 10px;
+    box-sizing: border-box;
+    position: relative;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+    cursor: pointer;
+       
+}
+
+.match-card:hover {
+    background: #2a2a2a;
+    border-color: #666;
+    transform: translateY(-2px);
+}
+
+.match-card.active {
+    border-color: #ff3b30;
+    background: #2a2a2a;
+    box-shadow: 0 0 15px rgba(255, 59, 48, 0.2);
+   /* animation: pulse 3.25s infinite;*/
+   
+}
+
+/* Card Top Row */
+.card-top {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.55rem; /* Smaller font */
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+
+.card-top .status-live { color: #ff7870; animation: pulse 1.25s infinite; font-size: 1.1rem; }
+.card-top .status-finished { color: #73ff78; }
+.card-top .status-scheduled { color: #6dbdff; }
+
+/* Card Middle: Teams & Scores */
+.card-middle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-grow: 1;
+    font-weight: 700;
+    color: #eee;
+    font-size: 0.75rem; /* Smaller font */
+   
+}
+
+.team-box {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+}
+
+.team-box.right { justify-content: flex-end; text-align: right; }
+
+.team-flag {
+    width: 16px;
+    height: 12px;
+    object-fit: cover;
+    border-radius: 2px;
+    background: #444;
+}
+
+.score-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 0 6px;
+    font-family: 'Courier New', monospace;
+    font-weight: 800;
+    letter-spacing: 1px;
+    
+}
+
+.score-big { font-size: 1.275rem; color: #89ff7c; }
+.score-tie { font-size: 1.275rem; color: #ffffff; }
+.score-small { font-size: 1.25rem; color: #ff8383; }
+
+/* Card Bottom: City/Stadium */
+.card-bottom {
+    font-size: 0.55rem;
+    color: #9d9d9d;
+    text-align: center;
+    margin-top: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}   
+
+/* --- Stadium Hover Tooltip --- */
+/* --- Stadium Hover Tooltip --- */
+.leaflet-tooltip.stadium-tooltip {
+  background: rgba(20, 20, 20, 0.95) !important; /* Fixed opacity (was 0.125) */
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 215, 0, 0.3) !important;
+  border-radius: 8px;
+  padding: 0 !important; /* Let inner content handle padding */
+  color: #fff;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+  pointer-events: auto; /* CRITICAL: Allows scrolling inside */
+  transition: opacity 0.2s ease;
+  max-width: 250px !important;
+}
+
+/* Remove default Leaflet wrappers that interfere */
+.leaflet-tooltip.stadium-tooltip .leaflet-tooltip-content-wrapper {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Fix the tip arrow color */
+.leaflet-tooltip.stadium-tooltip .leaflet-tooltip-tip {
+  background: rgba(20, 20, 20, 0.95) !important;
+  border-right: 1px solid rgba(255, 215, 0, 0.3);
+  border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+
+
+/* --- Inner Content Styling (Replaces Inline Styles) --- */
+.stadium-popup-content {
+  text-align: center;
+  min-width: 200px;
+  padding: 12px 16px; /* Moved from inline */
+}
+
+.stadium-name {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #FFD700;
+  margin-bottom: 4px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+  line-height: 1.3;
+  white-space: wrap;
+}
+
+.stadium-city {
+  font-size: 0.85rem;
+  color: #ccc;
+  margin-bottom: 6px;
+}
+
+.stadium-capacity {
+  font-size: 0.7rem;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+
+.stadium-matches-header {
+  font-size: 0.7rem;
+  color: #FFD700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-top: 1px solid #444;
+  border-bottom: 1px solid #444;
+  padding: 6px 0;
+  margin: 8px 0;
+  font-weight: 700;
+}
+
+.stadium-match-list {
+  max-height: 150px;
+  overflow-y: auto;
+  text-align: left;
+  scrollbar-width: thin;
+  scrollbar-color: #555 #222;
+}
+
+/* Custom Scrollbar for Webkit */
+.stadium-match-list::-webkit-scrollbar {
+  width: 4px;
+}
+.stadium-match-list::-webkit-scrollbar-track {
+  background: #222;
+}
+.stadium-match-list::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 2px;
+}
+
+.stadium-match-item {
+  border-bottom: 1px solid #333;
+  padding: 6px 0;
+  font-size: 0.75rem;
+  display: flex;
+  flex-direction: row; /* Stack meta above teams on very small screens, or use row */
+  gap: 2px;
+  white-space: nowrap; /* Force single line */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* If you strictly want EVERYTHING on one physical line (Meta + Teams): */
+.stadium-match-item {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* Space between time and teams */
+}
+
+.stadium-match-meta {
+  color: #888;
+  font-size: 0.65rem;
+  flex-shrink: 0; /* Prevent time from shrinking */
+  white-space: nowrap;
+}
+
+.stadium-match-teams {
+  color: #fff;
+  line-height: 1.3;
+  flex-shrink: 1; /* Allow teams to shrink if needed */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}   
+
+.stadium-match-score {
+  color: #8cb889;
+  font-weight: 700;
+}   
+
+
+</style>
+
+
+</head>
+<body><div id="timeline-center-marker" title="Jump to Current Time"></div>
+    <!-- 1. Load Venues Data FIRST -->
+    <script src="venues.js"></script>
+<!-- Timeline Container -->
+<div id="timeline-wrapper">
+    
+    <div id="timeline-track">
+        <!-- Match cards injected here -->
+    </div>
+</div>
+<div id="map"></div>
+<div id="map-tooltip"></div>   
+<!-- Year Filter UI -->
+<div id="year-filter-container" title="Scroll to change year, Click to reset">
+    <!-- Years injected by JS -->
+    <div id="reset-hint">Click to reset</div>
+</div>   
+<script src="data.js"></script>
+
+<script>
+// --- GLOBAL VARIABLES ---
+let allNodes = [];
+let allLinks = [];
+let uniqueYears = [];
+let selectedYear = null;
+let currentYearIndex = -1;
+let yearColorMap = {}; // Store colors to match filter glow to map dots
+
+// --- 1. INITIALIZE MAP ---
+const map = L.map('map', {
+    worldCopyJump: false,
+    noWrap: false,
+    zoomControl: false // Hide default zoom for cleaner look (optional)
+}).setView([20, 0], 2);
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; OpenStreetMap &copy; CARTO',
+    subdomains: 'abcd',
+    maxZoom: 19
+}).addTo(map);
+
+
+
+// --- 2. SETUP D3 ---
+const svg = d3.select(map.getPanes().overlayPane).append('svg');
+
+// ADD THIS: Define the Glow Filter
+svg.append('defs')
+    .append('filter')
+    .attr('id', 'glow-filter')
+    .attr('x', '-50%')
+    .attr('y', '-50%')
+    .attr('width', '200%')
+    .attr('height', '200%')
+    .html(`
+        <feGaussianBlur stdDeviation="12" result="coloredBlur"/>
+        <feMerge>
+            <feMergeNode in="coloredBlur"/>
+            <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+    `);
+
+const g = svg.append('g').attr('class', 'leaflet-zoom-hide');   
+
+// --- 2. CONFIGURATION ---
+const successRadius = {
+    "Champion": 14, "Final": 11, "Semi-Final": 9, 
+    "Quarter-Final": 7, "Round 16": 6, "Group": 5, "Host": 8
+};
+
+const specialColors = {
+    "Host": "#00FF00", "Champion": "#FFD700", 
+    "Final": "#C0C0C0", "Semi-Final": "#CD7F32"
+};
+
+const yearColorScale = d3.scaleOrdinal()
+    .domain(d3.range(1930, 2027))
+    .range(d3.quantize(d3.interpolateRainbow, 97));
+
+// --- 3. PROCESS DATA ---
+function processData() {
+    allNodes = [];
+    allLinks = [];
+
+    if (typeof fifaWorldCupParticipants === 'undefined') return;
+
+    const byYear = d3.group(fifaWorldCupParticipants, d => d.year);
+    uniqueYears = Array.from(byYear.keys()).sort();
+    currentYearIndex = -1;
+
+    byYear.forEach((participants, year) => {
+        // FIX: Find ALL hosts for this year (e.g., Japan AND South Korea)
+        const hosts = participants.filter(p => p.Success === "Host");
+        
+        participants.forEach(p => {
+            let r = successRadius[p.Success] || successRadius["Group"];
+            let c = specialColors[p.Success] || yearColorScale(year);
+
+            allNodes.push({ ...p, radius: r, color: c, yearColor: yearColorScale(year) });
+
+            // FIX: Create links from EVERY host to every participant
+            if (hosts.length > 0 && p.Success !== "Host") {
+                hosts.forEach(host => {
+                    // Avoid drawing a line from a host to itself
+                    if (p.id !== host.id) {
+                        allLinks.push({
+                            source: host,
+                            target: p,
+                            year: year,
+                            color: yearColorScale(year)
+                        });
+                    }
+                });
+            }
+        });
+    });
+
+    initYearFilter();
+    filterAndDraw();
+}   
+
+// ... [Keep Map Initialization and ProcessData same as before] ...
+// ENSURE you populate yearColorMap in processData:
+/*
+    const vibrantColor = yearColorScale(year);
+    yearColorMap[year] = vibrantColor; // <--- Add this line
+*/
+
+// --- 4. YEAR FILTER UI LOGIC (REPLACED) ---
+function initYearFilter() {
+    const container = document.getElementById('year-filter-container');
+    const hint = document.getElementById('reset-hint');
+    container.innerHTML = '';
+    container.appendChild(hint);
+
+    uniqueYears.forEach((year, index) => {
+        const el = document.createElement('div');
+        el.className = 'year-option';
+        el.textContent = year;
+        el.dataset.year = year;
+        el.dataset.index = index;
+        
+        // Click individual year to select
+        el.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent container reset click
+            if (selectedYear === year) {
+                resetFilter();
+            } else {
+                currentYearIndex = index;
+                selectedYear = year;
+                updateFisheyeUI();
+                filterAndDraw();
+            }
+        });
+
+        container.insertBefore(el, hint);
+    });
+
+    // Scroll Event
+    container.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        // Adjust sensitivity
+        const sensitivity = 50; 
+        if (e.deltaY > sensitivity) changeYear(1);
+        else if (e.deltaY < -sensitivity) changeYear(-1);
+    }, { passive: false });
+
+    // Click Container to Reset
+    container.addEventListener('click', () => {
+        if (selectedYear !== null) resetFilter();
+    });
+
+    updateFisheyeUI();
+}
+
+function changeYear(direction) {
+    let newIndex = currentYearIndex;
+    if (newIndex === -1) {
+        // If "All" was selected, jump to nearest or start
+        newIndex = direction > 0 ? 0 : uniqueYears.length - 1;
+    } else {
+        newIndex += direction;
+        if (newIndex < 0) newIndex = 0;
+        if (newIndex >= uniqueYears.length) newIndex = uniqueYears.length - 1;
+    }
+
+    if (newIndex !== currentYearIndex) {
+        currentYearIndex = newIndex;
+        selectedYear = uniqueYears[currentYearIndex];
+        updateFisheyeUI();
+        filterAndDraw();
+    }
+}
+
+function resetFilter() {
+    selectedYear = null;
+    currentYearIndex = -1;
+    updateFisheyeUI();
+    filterAndDraw();
+}
+
+// --- NEW: Dynamic Fisheye Calculation ---
+function updateFisheyeUI() {
+    const options = document.querySelectorAll('.year-option');
+    const centerIndex = currentYearIndex;
+    
+    // If no year selected, show all evenly but dim
+    if (centerIndex === -1) {
+        options.forEach(opt => {
+            opt.style.transform = 'scale(0.8)';
+            opt.style.fontSize = '0.9rem';
+            opt.style.opacity = '0.5';
+            opt.style.color = '#555';
+            opt.style.textShadow = 'none';
+            opt.classList.remove('accented');
+        });
+        return;
+    }
+
+    options.forEach(opt => {
+        const index = parseInt(opt.dataset.index);
+        const year = opt.dataset.year;
+        const distance = Math.abs(index - centerIndex);
+        
+        // Fisheye Math: Closer = Bigger
+        let scale, fontSize, opacity, color, shadow;
+
+        if (distance === 0) {
+            // CENTER (Active)
+            scale = 1.6;
+            fontSize = '0.8rem';
+            opacity = 1;
+            color = '#ffffff';
+            // ACCENT GLOW: Match the map color for this year
+            const yearColor = yearColorMap[year] || '#ffffff';
+            shadow = `0 0 10px ${yearColor}, 0 0 20px ${yearColor}`;
+            opt.classList.add('accented');
+        } else if (distance === 1) {
+            // Immediate Neighbors
+            scale = 1;
+            fontSize = '1.3rem';
+            opacity = 0.4;
+            color = '#aaa';
+            shadow = 'none';
+            opt.classList.remove('accented');
+        } else if (distance === 2) {
+            // Second Neighbors
+            scale = 0.9;
+            fontSize = '1rem';
+            opacity = 0.4;
+            color = '#666';
+            shadow = 'none';
+            opt.classList.remove('accented');
+        } else {
+            // Far away
+            scale = 0.7;
+            fontSize = '0.8rem';
+            opacity = 0.2;
+            color = '#444';
+            shadow = 'none';
+            opt.classList.remove('accented');
+        }
+
+        opt.style.transform = `scale(${scale})`;
+        opt.style.fontSize = fontSize;
+        opt.style.opacity = opacity;
+        opt.style.color = color;
+        opt.style.textShadow = shadow;
+    });
+}
+
+// ... [Keep filterAndDraw, generateDynamicElements, and draw same as before] ...
+
+// --- 5. FILTER & DRAW ---
+function filterAndDraw() {
+    // Filter Data
+    let filteredNodes = allNodes;
+    let filteredLinks = allLinks;
+
+    if (selectedYear !== null) {
+        filteredNodes = allNodes.filter(n => n.year === selectedYear);
+        filteredLinks = allLinks.filter(l => l.year === selectedYear);
+    }
+
+    // Generate Dynamic Repetitions for the FILTERED set
+    generateDynamicElements(filteredNodes, filteredLinks);
+    draw();
+}
+
+let renderNodes = [];
+let renderLinks = [];
+
+function generateDynamicElements(nodes, links) {
+    renderNodes = [];
+    renderLinks = [];
+
+    const worldWidthPixels = 256 * Math.pow(2, map.getZoom());
+    const mapWidthPixels = map.getSize().x;
+    const copiesNeeded = Math.ceil(mapWidthPixels / worldWidthPixels) + 2;
+
+    for (let i = -copiesNeeded; i <= copiesNeeded; i++) {
+        const lngOffset = i * 360;
+        nodes.forEach(n => {
+            renderNodes.push({ ...n, lng: n.lng + lngOffset, worldCopyIndex: i });
+        });
+        links.forEach(l => {
+            renderLinks.push({
+                source: { ...l.source, lng: l.source.lng + lngOffset },
+                target: { ...l.target, lng: l.target.lng + lngOffset },
+                worldCopyIndex: i
+            });
+        });
+    }
+}
+
+function draw() {
+    const bounds = map.getBounds();
+    const topLeft = map.latLngToLayerPoint(bounds.getNorthWest());
+    const bottomRight = map.latLngToLayerPoint(bounds.getSouthEast());
+
+    svg
+        .attr('width', bottomRight.x - topLeft.x)
+        .attr('height', bottomRight.y - topLeft.y)
+        .style('left', topLeft.x + 'px')
+        .style('top', topLeft.y + 'px');
+
+    g.attr('transform', `translate(${-topLeft.x},${-topLeft.y})`);
+
+    // --- Draw Lines (Unchanged) ---
+    g.selectAll('.host-line')
+        .data(renderLinks)
+        .join('path')
+        .attr('class', 'host-line')
+        .attr('d', d => {
+            const x1 = map.latLngToLayerPoint([d.source.lat, d.source.lng]).x;
+            const y1 = map.latLngToLayerPoint([d.source.lat, d.source.lng]).y;
+            const x2 = map.latLngToLayerPoint([d.target.lat, d.target.lng]).x;
+            const y2 = map.latLngToLayerPoint([d.target.lat, d.target.lng]).y;
+            return `M${x1},${y1} L${x2},${y2}`;
+        })
+        .attr('stroke' , '#fff')
+        .attr('stroke-width', selectedYear ? 0.7 : 0.5)
+        .attr('stroke-opacity', selectedYear ? 0.8 : 0.4)
+        .attr('stroke-linecap', 'round');
+
+    // --- Draw Circles WITH Hover Logic ---
+        
+    // --- Draw Circles WITH Glow Logic ---// --- Draw Circles with Multi-Host Logic + Glow Effect ---
+const tooltip = document.getElementById('map-tooltip');
+
+g.selectAll('circle')
+    .data(renderNodes)
+    .join('circle')
+    .attr('cx', d => map.latLngToLayerPoint([d.lat, d.lng]).x)
+    .attr('cy', d => map.latLngToLayerPoint([d.lat, d.lng]).y)
+    .attr('r', d => d.radius)
+    .attr('fill', d => d.color)
+    .attr('fill-opacity', selectedYear ? 0.9 : 0.6)
+    .attr('stroke', '#fff')
+    .attr('stroke-width', 1.5)
+    
+    .on('mouseover', function(event, d) {
+        // 1. LOGIC: Find ALL hosts for this year
+        const allHostsForYear = allNodes.filter(n => n.year === d.year && n.Success === "Host");
+        const hostNames = allHostsForYear.map(h => h.country).join(" & ");
+        const hostNameDisplay = hostNames || "N/A";
+
+        // 2. TOOLTIP: Update Content
+        tooltip.innerHTML = `
+            <div class="tt-title">${d.year} World Cup</div>
+            <div class="tt-row">
+                <span class="tt-label">Host${allHostsForYear.length > 1 ? 's' : ''}:</span>
+                <span class="tt-value">${hostNameDisplay}</span>
+            </div>
+            <div class="tt-row">
+                <span class="tt-label">Team:</span>
+                <span class="tt-value">${d.name}</span>
+            </div>
+            <div class="tt-row">
+                <span class="tt-label">Result:</span>
+                <span class="tt-value">${d.Success}</span>
+            </div>
+        `;
+        tooltip.classList.add('visible');
+
+        // 3. GLOW EFFECT: Apply filter and match stroke to color
+        d3.select(this)
+            .attr('stroke', d.color)       // Match stroke to circle color
+            .attr('stroke-width', 2)       // Crisp edge
+            .attr('fill-opacity', 1)       // Fully opaque
+            .attr('filter', 'url(#glow-filter)'); // Apply the glow defined in <defs>
+    })
+    .on('mousemove', function(event) {
+        tooltip.style.left = event.pageX + 'px';
+        tooltip.style.top = event.pageY + 'px';
+    })
+    .on('mouseout', function() {
+        // 1. TOOLTIP: Hide
+        tooltip.classList.remove('visible');
+
+        // 2. GLOW EFFECT: Remove filter and reset style
+        d3.select(this)
+            .attr('stroke', '#fff')        // Reset to white
+            .attr('stroke-width', 1.5)     // Reset width
+            .attr('fill-opacity', selectedYear ? 0.9 : 0.6)
+            .attr('filter', null);         // Remove glow
+    })
+    .on('click', (e, d) => {
+        L.popup()
+            .setLatLng([d.lat, d.lng])
+            .setContent(`<strong>${d.name}</strong><br>Year: ${d.year}<br>Success: ${d.Success}`)
+            .openOn(map);
+    });     
+}   
+
+// --- 6. EXECUTION ---
+processData();
+
+// Events
+map.on('zoomend', () => {
+    filterAndDraw(); // Re-calculate copies on zoom
+});
+map.on('moveend', draw);
+
+</script>   
+</script>
+<script>
+// --- Configuration ---// --- Configuration ---
+// --- Configuration ---
+const DATA_URL = 'https://raw.githubusercontent.com/26worldcup/26worldcup.github.io/main/public/data/matches.json';
+const timelineWrapper = document.getElementById('timeline-wrapper');
+const timelineTrack = document.getElementById('timeline-track');
+const centerMarker = document.getElementById('timeline-center-marker');
+
+// Cache variables
+let matchesCache = null;
+let venuesMap = {}; // Fast lookup map: ID -> { realName, city }
+let lastFetchTime = 0;
+const CACHE_DURATION = 30000;
+
+// --- 3-Letter to 2-Letter Country Code Mapping (For Flags) ---
+// Complete & Verified 3-Letter (FIFA) to 2-Letter (ISO) Code Mapping for all 48 Teams
+const country3to2 = {
+  // AFC (Asia)
+  'AUS': 'AU', // Australia
+  'IRN': 'IR', // Iran
+  'IRQ': 'IQ', // Iraq
+  'JPN': 'JP', // Japan
+  'JOR': 'JO', // Jordan
+  'KOR': 'KR', // South Korea
+  'KSA': 'SA', // Saudi Arabia
+  'UZB': 'UZ', // Uzbekistan
+  
+  // CAF (Africa)
+  'ALG': 'DZ', // Algeria
+  'CPV': 'CV', // Cabo Verde (Cape Verde)
+  'COD': 'CD', // DR Congo
+  'CIV': 'CI', // Ivory Coast
+  'EGY': 'EG', // Egypt
+  'GHA': 'GH', // Ghana
+  'MAR': 'MA', // Morocco
+  'SEN': 'SN', // Senegal
+  'RSA': 'ZA', // South Africa
+  'TUN': 'TN', // Tunisia
+  
+  // CONCACAF (North/Central America)
+  'CAN': 'CA', // Canada
+  'CUW': 'CW', // Curaçao
+  'HAI': 'HT', // Haiti
+  'MEX': 'MX', // Mexico
+  'PAN': 'PA', // Panama
+  'USA': 'US', // United States
+  
+  // CONMEBOL (South America)
+  'ARG': 'AR', // Argentina
+  'BRA': 'BR', // Brazil
+  'COL': 'CO', // Colombia
+  'ECU': 'EC', // Ecuador
+  'PAR': 'PY', // Paraguay
+  'URU': 'UY', // Uruguay
+  
+  // OFC (Oceania)
+  'NZL': 'NZ', // New Zealand
+  
+  // UEFA (Europe)
+  'AUT': 'AT', // Austria
+  'BEL': 'BE', // Belgium
+  'BIH': 'BA', // Bosnia and Herzegovina
+  'CRO': 'HR', // Croatia
+  'CZE': 'CZ', // Czechia
+  'ENG': 'GB', // England (uses GB for flags, specific eng exists on flagcdn)
+  'FRA': 'FR', // France
+  'GER': 'DE', // Germany
+  'NED': 'NL', // Netherlands
+  'NOR': 'NO', // Norway
+  'POR': 'PT', // Portugal
+  'SCO': 'GB', // Scotland (uses GB)
+  'ESP': 'ES', // Spain
+  'SWE': 'SE', // Sweden
+  'SUI': 'CH', // Switzerland
+  'TUR': 'TR'  // Turkey
+};   
+
+const getFlagUrl = (codeOrName) => {
+  if (!codeOrName) return 'https://flagcdn.com/w40/xx.png';
+  if (codeOrName.length === 2) return `https://flagcdn.com/w40/${codeOrName.toLowerCase()}.png`;
+  
+  const code2 = country3to2[codeOrName.toUpperCase()];
+  if (code2) return `https://flagcdn.com/w40/${code2.toLowerCase()}.png`;
+  
+  // Fallback name map
+  const nameMap = { 'USA': 'us', 'Mexico': 'mx', 'Canada': 'ca', 'Brazil': 'br', 'Germany': 'de', 'France': 'fr', 'Argentina': 'ar', 'England': 'gb-eng', 'Spain': 'es', 'Italy': 'it', 'Netherlands': 'nl', 'Portugal': 'pt', 'Belgium': 'be', 'Croatia': 'hr', 'Morocco': 'ma', 'Japan': 'jp', 'South Korea': 'kr', 'Australia': 'au', 'Switzerland': 'ch', 'Denmark': 'dk', 'Serbia': 'rs', 'Poland': 'pl', 'Uruguay': 'uy', 'Ecuador': 'ec', 'Senegal': 'sn', 'Qatar': 'qa', 'Saudi Arabia': 'sa', 'Iran': 'ir', 'Tunisia': 'tn', 'Cameroon': 'cm', 'Ghana': 'gh', 'Costa Rica': 'cr', 'Wales': 'gb-wls', 'DR Congo': 'cd', 'Cape Verde': 'cv', 'Algeria': 'dz', 'Austria': 'at', 'Czechia': 'cz', 'Scotland': 'gb-sct', 'Haiti': 'ht', 'Curaçao': 'cw', 'Panama': 'pa', 'New Zealand': 'nz', 'Iraq': 'iq', 'Jordan': 'jo', 'Uzbekistan': 'uz', 'Turkey': 'tr', 'Bosnia and Herzegovina': 'ba', 'Norway': 'no', 'Sweden': 'se', 'South Africa': 'za', 'Egypt': 'eg', 'Colombia': 'co', 'Chile': 'cl' };
+  return `https://flagcdn.com/w40/${nameMap[codeOrName] || 'xx'}.png`;
+};
+
+// --- DYNAMIC VENUE LOOKUP LOGIC ---
+function initVenues() {
+  if (typeof venuesData !== 'undefined' && venuesData.venues) {
+    // Convert the venues object into a fast lookup map
+    venuesMap = venuesData.venues;
+    console.log(`Loaded ${Object.keys(venuesMap).length} venues for lookup.`);
+    return true;
+  }
+  console.warn('Venues data not found. Ensure venues.js is loaded before this script.');
+  return false;
+}
+
+function getVenueDetails(venueId) {
+  if (!venueId || !venuesMap[venueId]) {
+    return { realName: 'TBD', city: 'TBD' };
+  }
+  const venue = venuesMap[venueId];
+  return {
+    realName: venue.realName || 'Unknown Stadium',
+    city: venue.city || 'Unknown City'
+  };
+}
+
+// Convert UTC to Local Time
+function getLocalTime(utcString) {
+  const date = new Date(utcString);
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+// Horizontal Scroll with Mouse Wheel
+timelineWrapper.addEventListener('wheel', (evt) => {
+  evt.preventDefault();
+  timelineWrapper.scrollLeft += evt.deltaY;
+});
+
+// --- Fetch Matches ---
+async function fetchMatches() {
+  const now = Date.now();
+  if (matchesCache && (now - lastFetchTime) < CACHE_DURATION) return matchesCache;
+
+  try {
+    const response = await fetch(`${DATA_URL}?t=${now}`);
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    
+    const data = await response.json();
+    let finalData = data;
+    
+    if (Array.isArray(data)) finalData = data;
+    else if (data.matches && Array.isArray(data.matches)) finalData = data.matches;
+    else if (data.data && Array.isArray(data.data)) finalData = data.data;
+    else {
+      const key = Object.keys(data).find(k => Array.isArray(data[k]));
+      if (key) finalData = data[key];
+    }
+
+    matchesCache = finalData;
+    lastFetchTime = now;
+    return finalData;
+  } catch (error) {
+    console.error('Failed to fetch matches:', error);
+    return matchesCache || [];
+  }
+}
+
+// --- Render Timeline ---
+function renderTimeline(matches) {
+  timelineTrack.innerHTML = '';
+  if (!matches || matches.length === 0) {
+    timelineTrack.innerHTML = '<div style="color:#666; padding:20px;">No match data available</div>';
+    return;
+  }
+
+  matches.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  matches.forEach(match => {
+    const card = document.createElement('div');
+    card.className = 'match-card';
+    card.id = `match-${match.n}`;
+    card.dataset.date = match.date;
+    
+    const isFinished = match.status === 'finished';
+    const isLive = match.status === 'live';
+    
+    // Team Data
+    const homeTeam = match.home ? (match.home.name || match.home.code || 'TBD') : (match.team1 || 'TBD');
+    const awayTeam = match.away ? (match.away.name || match.away.code || 'TBD') : (match.team2 || 'TBD');
+    const homeCode = match.home ? (match.home.code || '') : '';
+    const awayCode = match.away ? (match.away.code || '') : '';
+    const homeScore = match.home ? match.home.score : match.score1;
+    const awayScore = match.away ? match.away.score : match.score2;
+    
+    // DYNAMIC VENUE LOOKUP
+    const venueId = match.venueId || match.venue;
+    const venueDetails = getVenueDetails(venueId);
+    const stadiumText = `${venueDetails.realName}, ${venueDetails.city}`;
+
+    // Status
+    // --- Helper: Calculate Live Minute from Start Time ---
+function calculateLiveMinute(startDateStr) {
+  const startDate = new Date(startDateStr);
+  const now = new Date();
+  const diffMs = now - startDate;
+  
+  // Convert milliseconds to minutes
+  let minutes = Math.floor(diffMs / 60000);
+  
+  // Cap at 90+ (or 120 for extra time) to avoid unrealistic numbers if data is stale
+  if (minutes > 120) minutes = 120;
+  if (minutes < 0) minutes = 0;
+  
+  return minutes;
+}
+
+// --- Inside renderTimeline, where statusText is defined ---
+// --- Inside renderTimeline, where statusText is defined ---
+let statusText, statusClass;
+
+if (isFinished) {
+  if (match.time && typeof match.time === 'string' && match.time.trim() !== '') {
+    
+    // Extract numeric value (e.g., "98'" -> 98)
+    const totalMinutes = parseInt(match.time.replace("'", ""), 10);
+    
+    if (!isNaN(totalMinutes)) {
+      if (totalMinutes > 90) {
+        // Calculate stoppage time (e.g., 98 - 90 = 8)
+        const stoppageTime = totalMinutes - 90;
+        // Output: FT +8'
+        statusText = `FT +${stoppageTime}'`;
+      } else if (totalMinutes > 45 && totalMinutes <= 60) {
+        // Handle Half Time stoppage (e.g., 48' -> HT +3')
+        const stoppageTime = totalMinutes - 45;
+        statusText = `HT +${stoppageTime}'`;
+      } else {
+        // Regular time (e.g., 45', 90') -> Just show FT
+        statusText = 'FT';
+      }
+    } else {
+      statusText = 'FT';
+    }
+  } else {
+    statusText = 'FT';
+  }
+  statusClass = 'status-finished';
+}      
+ else if (isLive) {
+  // For LIVE matches, use the 'time' field if available, otherwise calculate from start time
+  if (match.time && typeof match.time === 'string' && match.time.trim() !== '') {
+    statusText = "LIVE  "+match.time.replace("'", "") + "'" ;
+  } else {
+    // Fallback: calculate from kickoff time
+    const startDate = new Date(match.date);
+    const now = new Date();
+    const diffMs = now - startDate;
+    let minutes = Math.floor(diffMs / 60000);
+    if (minutes > 120) minutes = 120;
+    if (minutes < 0) minutes = 0;
+    statusText = minutes + "'";
+  }
+  statusClass = 'status-live';
+} else {
+  // Future matches: Show local kick-off time
+  statusText = getLocalTime(match.date);
+  statusClass = 'status-scheduled';
+}      
+    const stageName = match.stage === 'r32' ? 'Round of 32' : match.stage === 'qf' ? 'Quarter-Final' : match.stage === 'sf' ? 'Semi-Final' : match.stage === 'final' ? 'Final' : 'Group';
+    
+    // Score Styling
+    let homeClass = 'score-small', awayClass  = 'score-small';
+    if (isFinished && homeScore !== null && awayScore !== null) {
+      if (homeScore > awayScore) homeClass = 'score-big';
+      else if (awayScore > homeScore) awayClass  = 'score-big';
+      else { homeClass = 'score-tie'; awayClass  = 'score-tie'; }
+    }
+
+    card.innerHTML = `
+  <div class="card-top">
+    <span>#${match.n}</span>
+    <span>${stageName}</span>
+    <span class="${statusClass}">${statusText}</span>
+  </div>
+  <div class="card-middle">
+    <div class="team-box">
+      <img src="${getFlagUrl(homeCode || homeTeam)}" class="team-flag" alt="${homeTeam}">
+      <span>${homeTeam}</span>
+    </div>
+    
+    <!-- FIX: Individual spans for scores -->
+    <div class="score-box">
+      <span class="${homeClass}">${homeScore !== null ? homeScore : '-'}</span>
+      <span style="color:#555; font-size:1rem;">:</span>
+      <span class="${awayClass}">${awayScore !== null ? awayScore : '-'}</span>
+    </div>
+    
+    <div class="team-box right">
+      <span>${awayTeam}</span>
+      <img src="${getFlagUrl(awayCode || awayTeam)}" class="team-flag" alt="${awayTeam}">
+    </div>
+  </div>
+  <div class="card-bottom">${stadiumText}</div>
+`;
+
+    card.addEventListener('click', () => scrollToMatch(card));
+    timelineTrack.appendChild(card);
+  });
+  
+  scrollToCurrentTime();
+}
+
+// --- Initialization ---
+async function initTimeline() {
+  // 1. Initialize Venues
+  if (!initVenues()) {
+    console.error('Cannot start timeline: Venues data missing.');
+    return;
+  }
+
+ 
+
+  // 3. Fetch Matches & Render Timeline
+  const matches = await fetchMatches();
+  renderTimeline(matches);
+   // 2. ADD STADIUM MARKERS TO MAP
+  addStadiumMarkers();
+  
+  setTimeout(scrollToCurrentTime, 100);
+  
+  // Auto-refresh
+  setInterval(async () => {
+    await fetchMatches();
+    renderTimeline(matchesCache);
+    scrollToCurrentTime();
+  }, 60000);
+}   
+
+function scrollToMatch(cardElement) {
+  const wrapper = document.getElementById('timeline-wrapper');
+  const cardCenter = cardElement.offsetLeft + (cardElement.offsetWidth / 2);
+  const wrapperCenter = wrapper.offsetWidth / 2;
+  wrapper.scrollTo({ left: cardCenter - wrapperCenter, behavior: 'smooth' });
+}
+
+function scrollToCurrentTime() {
+    if (!matchesCache) return;
+    
+    const now = new Date();
+    const cards = document.querySelectorAll('.match-card');
+    let liveCard = null;
+    let lastFinishedCard = null;
+    let nextUpcomingCard = null;
+
+    cards.forEach(card => {
+        card.classList.remove('active');
+        const matchDate = new Date(card.dataset.date);
+        const statusEl = card.querySelector('.card-top span:last-child');
+        const isLive = statusEl && statusEl.classList.contains('status-live');
+
+        // Priority 1: Live Match
+        if (isLive) {
+            liveCard = card;
+        }
+        
+        // Priority 2: Last Finished Match (if no live match)
+        if (matchDate <= now) {
+            lastFinishedCard = card;
+        } 
+        // Priority 3: Next Upcoming (if no live or finished)
+        else if (!nextUpcomingCard) {
+            nextUpcomingCard = card;
+        }
+    });
+
+    // Select based on priority: Live > Last Finished > Next Upcoming
+    const activeCard = liveCard || lastFinishedCard || nextUpcomingCard;
+    
+    if (activeCard) {
+        activeCard.classList.add('active');
+        // Use scrollIntoView for smoother, native centering
+        activeCard.scrollIntoView({ 
+            behavior: 'smooth', 
+            inline: 'center', 
+            block: 'nearest' 
+        });
+    }
+}   
+
+centerMarker.addEventListener('click', () => {
+  fetchMatches().then(() => { renderTimeline(matchesCache); scrollToCurrentTime(); });
+});
+
+
+// --- STADIUM OVERLAY LOGIC ---
+
+// 1. Define the Gold Stadium Icon (Data URI)
+// This creates a gold stadium icon programmatically, ignoring your black SVG file issues
+const stadiumSvgString = `
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32">
+    <path fill="#FFD700" stroke="#000" stroke-width="0.5" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-5-9c.83 0 1.5-.67 1.5-1.5S7.83 8 7 8s-1.5.67-1.5 1.5S6.17 11 7 11zm3.5 3c-.83 0-1.5-.67-1.5-1.5S9.67 13 10.5 13s1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm3.5-3c-.83 0-1.5-.67-1.5-1.5S13.17 8 14 8s1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM12 16c-2.03 0-3.8-1.11-4.75-2.75.17-.25.39-.48.64-.66.69 1.19 1.97 2.01 3.46 2.01 1.49 0 2.77-.82 3.46-2.01.25.18.47.41.64.66C15.8 14.89 14.03 16 12 16z"/>
+  </svg>`;
+
+const stadiumIconUrl = 'data:image/svg+xml;base64,' + btoa(stadiumSvgString);
+
+// Use the local file path directly
+const stadiumIcon = L.icon({
+    iconUrl: 'img/Stadium.svg', // Points to your local file
+    iconSize: [14, 14],         // Force size to 32x32 pixels
+    iconAnchor: [16, 16],       // Center the anchor
+    popupAnchor: [0, -16]
+});   
+
+// 2. Add Markers to Map
+ function addStadiumMarkers() {
+  // 1. Safety Checks
+  if (!venuesMap || Object.keys(venuesMap).length === 0) {
+    console.warn("No venue data available for markers.");
+    return; // Valid: returning from addStadiumMarkers
+  }
+
+  // 2. Define Helper Function INSIDE addStadiumMarkers
+  // This ensures it has access to matchesCache and venuesMap
+  function getMatchesForVenue(venueId, matches) {
+    if (!matches || matches.length === 0) {
+      return '<div class="stadium-match-list" style="text-align:center; color:#888; padding:10px;">No matches scheduled</div>';
+    }
+
+    const venueMatches = matches.filter(m => {
+      const mVenueId = m.venueId || m.venue;
+      return mVenueId === venueId;
+    });
+    
+    if (venueMatches.length === 0) {
+      return '<div class="stadium-match-list" style="text-align:center; color:#888; padding:10px;">No matches scheduled</div>';
+    }
+
+    venueMatches.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    let html = '<div class="stadium-match-list">';
+    
+    venueMatches.forEach(m => {
+      const dateObj = new Date(m.date);
+      const dateStr = dateObj.toLocaleDateString([], { month: 'short', day: 'numeric' });
+      const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      
+      const homeName = m.home ? (m.home.name || m.home.code) : (m.team1 || 'TBD');
+      const awayName = m.away ? (m.away.name || m.away.code) : (m.team2 || 'TBD');
+      
+      const homeScore = m.home ? m.home.score : m.score1;
+      const awayScore = m.away ? m.away.score : m.score2;
+      const isFinished = m.status === 'finished';
+      
+      const scoreDisplay = isFinished 
+        ? ` <span class="stadium-match-score">${homeScore} vs ${awayScore}</span>` 
+        : '';
+
+      html += `
+         <div class="stadium-match-item">
+    <span class="stadium-match-meta">${dateStr}</span>
+    <span class="stadium-match-teams">
+      ${homeName}${scoreDisplay} <span style="color:#666;"></span> ${awayName}
+    </span><span class="stadium-match-meta">${timeStr}</span>
+  </div>
+      `;
+    });
+
+    html += '</div>';
+    return html; // Valid: returning from getMatchesForVenue
+  }
+
+  // 3. Main Loop
+  Object.values(venuesMap).forEach(venue => {
+    if (!venue.lat || !venue.lon) return;
+
+    const marker = L.marker([venue.lat, venue.lon], { icon: stadiumIcon });
+
+    // Call the helper function
+    const matchListHtml = getMatchesForVenue(venue.id, matchesCache);
+
+    const popupContent = `
+      <div class="stadium-popup-content">
+        <div class="stadium-name">${venue.realName || venue.name || 'Stadium'}</div>
+        <div class="stadium-city">${venue.city || 'Unknown City'}</div>
+        <div class="stadium-capacity">Capacity: ${venue.capacity ? venue.capacity.toLocaleString() : 'N/A'}</div>
+        
+        <div class="stadium-matches-header">Matches at this Venue</div>
+        ${matchListHtml}
+      </div>
+    `;
+
+marker.bindPopup(popupContent, {
+  className: 'stadium-tooltip', // Applies your custom CSS
+  maxWidth: 250,
+  minWidth: 200,
+  closeButton: true,
+  autoClose: true,      // Closes when you hover another marker
+  closeOnClick: false,  // Keeps it open if you click the map to scroll
+  offset: [0, -5]       // Slight lift to sit nicely above the icon
+});
+
+// Open on Hover
+marker.on('mouseover', function() {
+  this.openPopup();
+});   
+    marker.addTo(map);
+  });
+}       
+
+// 3. Initialize Stadiums after Venues are loaded
+// Add this line inside your initTimeline() function, after initVenues() succeeds:
+/*
+  if (initVenues()) {
+    addStadiumMarkers(); // <--- ADD THIS
+    // ... rest of timeline init ...
+  }
+*/   
+
+
+// Start
+initTimeline();    
+</script>
+</body>
+</html>   
