@@ -7,7 +7,7 @@ Retrieved 2026-06-29, License - CC BY-SA 4.0
 <details>
   <summary>Dashboard as of Jun 2026</summary>
   <img src="/Current_State/Screenshot 202606 (1).png" alt="image-description"/>
-   <img src="/Current_State/Screenshot 202606 (2).png" alt="image-description"/>
+   
    <img src="/Current_State/Screenshot 202606 (3).png" alt="image-description"/>
    <img src="/Current_State/Screenshot 202606 (4).png" alt="image-description"/>
    <img src="/Current_State/Screenshot 202606 (5).png" alt="image-description"/>
@@ -27,6 +27,6 @@ Retrieved 2026-06-29, License - CC BY-SA 4.0
    <img src="/Current_State/Screenshot 202606 (19).png" alt="image-description"/>
    <img src="/Current_State/Screenshot 202606 (20).png" alt="image-description"/>
   
-  
+  <img src="/Current_State/Screenshot 202606 (2).png" alt="Last change, LIVE+Min Size/Animation"/>
 </details>
 
