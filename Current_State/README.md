@@ -6,7 +6,7 @@ Retrieved 2026-06-29, License - CC BY-SA 4.0
 
 <details>
   <summary>The title of the image group</summary>
-  <img src="Current_State/Screenshot 202606 (1).png" alt="image-description"/>
+  <img src="/Current_State/Screenshot 202606 (1).png" alt="image-description"/>
   <img src="image-url" alt="image-description"/>
   <img src="image-url" alt="image-description"/>
 </details>
