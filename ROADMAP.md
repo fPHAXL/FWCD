@@ -75,38 +75,22 @@ Brand evolution documentation
 
 ## 📁 Proposed Repository Structure
 /FWCD-archive
-
-├── /tournaments
-
-│   ├── /1930
-
-│   ├── /1934
-
-│   └── ... (each tournament year)
-
-├── /jerseys
-
-│   ├── /by-nation
-
-│   └── /by-tournament
-
-├── /profiles
-
-│   ├── /players
-
-│   └── /managers
-
-├── /logos
-
-│   ├── /nations
-
-│   └── /clubs
-
-├── /scripts
-
-├── /documentation
-
-└── README.md
+├── /tournaments  
+│   ├── /1930  
+│   ├── /1934  
+│   └── ... (each tournament year)  
+├── /jerseys  
+│   ├── /by-nation  
+│   └── /by-tournament  
+├── /profiles  
+│   ├── /players  
+│   └── /managers  
+├── /logos   
+│   ├── /nations  
+│   └── /clubs  
+├── /scripts  
+├── /documentation  
+└── README.md  
 
 
 ## 🛠️ Data Standards & Format
