@@ -20,8 +20,8 @@ Infinite Scroll: Seamless world repetition for both data points and stadium mark
 ⚡ Real-Time Updates: Auto-refreshes every 60 seconds; calculates live match minutes based on kickoff time (ignoring API delays).
 📱 Responsive UI: Auto-hiding side brackets, glassmorphism design, and mobile-friendly optimizations. 
 
-***********************************************************************************************************************************************************
-                  Jumping in here, NOT ready yet, but you can see the screenshots of current progress in /Current.State                  ***********************************************************************************************************************************************************
+***********************************************************************************************************************************
+                  Jumping in here, NOT ready yet, but you can see the screenshots of current progress in /Current.State                  ***********************************************************************************************************************************
 
 🚀 Quick Start
 Clone the repository:
@@ -56,8 +56,8 @@ Historical Data: Local data.js
 Styling: Vanilla CSS with Glassmorphism (backdrop-filter)
 Icons: FlagCDN for team flags
 
-                  ***********************************************************************************************************************************************************
-                  Jumping in here, NOT ready yet, but you can see the screenshots of current progress in /Current.State                  ***********************************************************************************************************************************************************
+************************************************************************************************************************************
+                  Jumping in here, NOT ready yet, but you can see the screenshots of current progress in /Current.State                  *************************************************************************************************************************************
 
 📁 Project Structure
 FWCD/
