@@ -1,4 +1,4 @@
-#📋 Project Overview
+#📋 Project Overview#
 This repository aims to build the most complete and structured historical database of FIFA World Cup tournaments. The project focuses on four main pillars:
 
 Historical Tournament Data: Comprehensive match-by-match data for every tournament year
@@ -6,11 +6,11 @@ National Jersey Archive: Visual collection of all national team kits by tourname
 Player & Manager Profiles: Headshots and biographical data for all squad members
 Logo Collection: Club and national team emblems in high resolution 
 
-##🗺️ Roadmap
+##🗺️ Roadmap##
 Phase 1: Tournament Structure & Historical Data Collection
 Objective: Gather and structure all tournament-level and match-level data for every World Cup year. 
 
-##Key Data Points:
+##Key Data Points:###
 
 Tournament metadata (host nation, dates, champion, runner-up, third place)
 Match statistics (total matches, attendance, goals, average goals per match)
