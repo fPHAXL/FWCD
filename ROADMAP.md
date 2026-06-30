@@ -1,4 +1,4 @@
-#📋 Project Overview#
+# 📋 Project Overview
 This repository aims to build the most complete and structured historical database of FIFA World Cup tournaments. The project focuses on four main pillars:
 
 Historical Tournament Data: Comprehensive match-by-match data for every tournament year
@@ -6,11 +6,11 @@ National Jersey Archive: Visual collection of all national team kits by tourname
 Player & Manager Profiles: Headshots and biographical data for all squad members
 Logo Collection: Club and national team emblems in high resolution 
 
-##🗺️ Roadmap##
+## 🗺️ Roadmap
 Phase 1: Tournament Structure & Historical Data Collection
 Objective: Gather and structure all tournament-level and match-level data for every World Cup year. 
 
-##Key Data Points:###
+## Key Data Points:
 
 Tournament metadata (host nation, dates, champion, runner-up, third place)
 Match statistics (total matches, attendance, goals, average goals per match)
@@ -26,10 +26,10 @@ Match event timelines in chronological order
 Referee and officiating data
 Final rankings and fair play standings
 
-##Phase 2: National Jersey Curation
+## Phase 2: National Jersey Curation
 Objective: Collect and catalog all national team jerseys worn in each tournament.
 
-###Key Data Points:
+### Key Data Points:
 
 Home, away, and third kits per nation per tournament
 Jersey design evolution across years
@@ -41,10 +41,10 @@ Organized image archive by nation and year
 Metadata file linking jerseys to tournament appearances
 Visual timeline of kit evolution
 
-##Phase 3: Player & Manager Profile Pictures
+## Phase 3: Player & Manager Profile Pictures
 Objective: Assemble headshots and profile data for every player and manager in World Cup history.
 
-##Key Data Points:
+## Key Data Points:
 
 Official tournament headshots
 Biographical data (date of birth, place of birth, height, dominant foot)
@@ -58,10 +58,10 @@ Player index with tournament participation history
 Manager/coach profile collection
 
 
-##Phase 4: Club & National Logo Collection
+## Phase 4: Club & National Logo Collection
 Objective: Gather high-quality logos for all clubs and national teams represented in World Cup tournaments.
 
-###Key Data Points:
+### Key Data Points:
 
 National federation emblems by era
 Club logos for all player affiliations
@@ -74,7 +74,7 @@ Metadata linking logos to players and tournaments
 Brand evolution documentation
 
 
-##📁 Proposed Repository Structure
+## 📁 Proposed Repository Structure
 /FWCD-archive
 ├── /tournaments
 │   ├── /1930
@@ -94,14 +94,14 @@ Brand evolution documentation
 └── README.md
 
 
-##🛠️ Data Standards & Format
+## 🛠️ Data Standards & Format
 Data Format: JSON for structured data, CSV for tabular exports
 Image Format: PNG/JPG for photos, SVG/PNG for logos
 Naming Conventions: YYYY-NATION-TYPE (e.g., 1998-FRA-JERSEY-HOME)
 Date Standard: ISO 8601 (YYYY-MM-DD)
 Encoding: UTF-8 for all text files
   
-##🤝 Contributing
+## 🤝 Contributing
 Contributions are welcome! Please follow these steps:
 
 Fork the repository
