@@ -9,7 +9,7 @@ Logo Collection: Club and national team emblems in high resolution
 ## Phase 1: Tournament Structure & Historical Data Collection
 Objective: Gather and structure all tournament-level and match-level data for every World Cup year. 
 
-## Key Data Points:
+### Key Data Points:
 
 Tournament metadata (host nation, dates, champion, runner-up, third place)
 Match statistics (total matches, attendance, goals, average goals per match)
@@ -43,7 +43,7 @@ Visual timeline of kit evolution
 ## Phase 3: Player & Manager Profile Pictures
 Objective: Assemble headshots and profile data for every player and manager in World Cup history.
 
-## Key Data Points:
+### Key Data Points:
 
 Official tournament headshots
 Biographical data (date of birth, place of birth, height, dominant foot)
