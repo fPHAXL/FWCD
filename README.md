@@ -21,22 +21,24 @@ Infinite Scroll: Seamless world repetition for both data points and stadium mark
 📱 Responsive UI: Auto-hiding side brackets, glassmorphism design, and mobile-friendly optimizations. 
 
 
-                  Jumping in here, NOT ready yet, but you can see the screenshots of current progress in /Current.State                  ***********************************************************************************************************************************
+  Jumping in here, NOT ready yet, but you can see the screenshots of current progress in /Current.State                  ********************************************************************************************************
 
 🚀 Quick Start
 Clone the repository:
-git clone https://github.com/fPHAXL/FWCD/
+
+git clone https://github.com/fPHAXL/FWCD
+
 cd FWCD
 
 Open in Browser: Since this is a static single-page application, simply open allin.html in any modern browser.
 # macOS
-open allin.html
+open XXXXX.html
 
 # Windows
-start allin.html
+start XXXXX.html
 
 # Linux
-xdg-open allin.html
+xdg-open XXXXX.html
 
 (Optional) Local Server: For best performance with external data fetching, run a local server:
 # Using Python 3
@@ -57,18 +59,25 @@ Styling: Vanilla CSS with Glassmorphism (backdrop-filter)
 Icons: FlagCDN for team flags
 
 
-                  Jumping in here, NOT ready yet, but you can see the screenshots of current progress in /Current.State                  *************************************************************************************************************************************
-
+Jumping in here, NOT ready yet, but you can see the screenshots of current progress in /Current.State                  ******************************************************************************************************
 📁 Project Structure
 FWCD/
 ├──           # Main application (single-file)
+
 ├──            # 2026 Stadium data (lat, lon, capacity)
+
 ├──              # Historical World Cup participants (1930-2022)
+
 ├── /        # Add your screenshots here
+
 │   ├── 
+
 │   ├── 
+
 │   └── 
+
 ├── LICENSE             # MIT License
+
 └── README.md           # This file
 
 🎮 Usage Guide
