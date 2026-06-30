@@ -11,13 +11,13 @@ Logo Collection: Club and national team emblems in high resolution
 
 ### Key Data Points:
 
-- [ ]Tournament metadata (host nation, dates, champion, runner-up, third place)
-- [ ]Match statistics (total matches, attendance, goals, average goals per match)
-- [ ]Individual match details (lineups, substitutions, coaches, timeline of events)
-- [ ]Goal breakdowns (method of scoring: header, left foot, right foot, penalty, own goal)
-- [ ]Stadium information (capacity, location, weather, fun facts)
-- [ ]Group standings and knockout progression paths
-- [ ]Player tournament appearances and performance metrics 
+- [ ] Tournament metadata (host nation, dates, champion, runner-up, third place)
+- [ ] Match statistics (total matches, attendance, goals, average goals per match)
+- [ ] Individual match details (lineups, substitutions, coaches, timeline of events)
+- [ ] Goal breakdowns (method of scoring: header, left foot, right foot, penalty, own goal)
+- [ ] Stadium information (capacity, location, weather, fun facts)
+- [ ] Group standings and knockout progression paths
+- [ ] Player tournament appearances and performance metrics 
 
 #### Deliverables:
 
@@ -27,14 +27,14 @@ Referee and officiating data
 Final rankings and fair play standings
 
 ## Phase 2: National Jersey Curation
-- [ ]Objective: Collect and catalog all national team jerseys worn in each tournament.
+- [ ] Objective: Collect and catalog all national team jerseys worn in each tournament.
 
 ### Key Data Points:
 
-- [ ]Home, away, and third kits per nation per tournament
-- [ ]Jersey design evolution across years
-- [ ]Manufacturer and sponsorship details
-- [ ]High-resolution images with proper attribution
+- [ ] Home, away, and third kits per nation per tournament
+- [ ] Jersey design evolution across years
+- [ ] Manufacturer and sponsorship details
+- [ ] High-resolution images with proper attribution
 
 #### Deliverables:
 
@@ -43,15 +43,15 @@ Metadata file linking jerseys to tournament appearances
 Visual timeline of kit evolution
 
 ## Phase 3: Player & Manager Profile Pictures
-- [ ]Objective: Assemble headshots and profile data for every player and manager in World Cup history.
+- [ ] Objective: Assemble headshots and profile data for every player and manager in World Cup history.
 
 ### Key Data Points:
 
-- [ ]Official tournament headshots
-- [ ]Biographical data (date of birth, place of birth, height, dominant foot)
-- [ ]Club affiliations during tournament
-- [ ]Position-specific categorization (goalkeeper, defender, midfielder, attacker)
-- [ ]Captaincy and appearance records
+- [ ] Official tournament headshots
+- [ ] Biographical data (date of birth, place of birth, height, dominant foot)
+- [ ] Club affiliations during tournament
+- [ ] Position-specific categorization (goalkeeper, defender, midfielder, attacker)
+- [ ] Captaincy and appearance records
 
 #### Deliverables:
 
@@ -65,10 +65,10 @@ Objective: Gather high-quality logos for all clubs and national teams represente
 
 ### Key Data Points:
 
-- [ ]National federation emblems by era
-- [ ]Club logos for all player affiliations
-- [ ]Vector and raster formats where available
-- [ ]Logo usage timeline and variations
+- [ ] National federation emblems by era
+- [ ] Club logos for all player affiliations
+- [ ] Vector and raster formats where available
+- [ ] Logo usage timeline and variations
 
 #### Deliverables:
 
@@ -79,21 +79,21 @@ Brand evolution documentation
 
 ## 📁 Proposed Repository Structure
 /FWCD-archive
-- [ ]├── /tournaments
+- [ ] ├── /tournaments
 │   ├── /1930
 │   ├── /1934
 │   └── ... (each tournament year)
-- [ ]├── /jerseys
+- [ ] ├── /jerseys
 │   ├── /by-nation
 │   └── /by-tournament
-- [ ]├── /profiles
+- [ ] ├── /profiles
 │   ├── /players
 │   └── /managers
-- [ ]├── /logos
+- [ ] ├── /logos
 │   ├── /nations
 │   └── /clubs
-- [ ]├── /scripts
-- [ ]├── /documentation
+- [ ] ├── /scripts
+- [ ] ├── /documentation
 └── README.md   
 
 
