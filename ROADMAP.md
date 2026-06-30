@@ -35,7 +35,8 @@ Final rankings and fair play standings
 - [ ]Jersey design evolution across years
 - [ ]Manufacturer and sponsorship details
 - [ ]High-resolution images with proper attribution
-- [ ]Deliverables:
+
+#### Deliverables:
 
 Organized image archive by nation and year
 Metadata file linking jerseys to tournament appearances
