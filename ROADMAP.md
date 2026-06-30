@@ -7,7 +7,7 @@ Player & Manager Profiles: Headshots and biographical data for all squad members
 Logo Collection: Club and national team emblems in high resolution 
 
 ## Phase 1: Tournament Structure & Historical Data Collection
-[x] Objective: Gather and structure all tournament-level and match-level data for every World Cup year. 
+[ ] Objective: Gather and structure all tournament-level and match-level data for every World Cup year. 
 
 ### Key Data Points:
 
