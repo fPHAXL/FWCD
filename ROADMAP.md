@@ -1,4 +1,4 @@
-# 📋 Project Overview and Roadmap 🗺️ 
+# 📋 Project Overview and Roadmap 
 This repository aims to build the most complete and structured historical database of FIFA World Cup tournaments. The project focuses on four main pillars:
 
 Historical Tournament Data: Comprehensive match-by-match data for every tournament year
